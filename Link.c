@@ -32,7 +32,10 @@ void* _Link_insert(pNode paramlist,int key,void *value,int datalen)
     newp->key = key;
     newp->next = NULL;
     newp->data = MemoryPool_Alloc(datalen);
-    memcpy(newp->data,value,datalen);
+    if(value == NULL)
+        memset(newp->data,0,datalen);
+    else
+        memcpy(newp->data,value,datalen);
     paramlist->next = newp;
     return newp;
 }
@@ -43,7 +46,10 @@ pNode findAndCreateLink(int needSave,int key,void* value,int datalen)
         head = (pNode)MemoryPool_Alloc(sizeof(Node));
         head->key = key;
         head->data = MemoryPool_Alloc(datalen);
-        memcpy(head->data,value,datalen);
+        if(value == NULL)
+            memset(head->data,0,datalen);
+        else
+            memcpy(head->data,value,datalen);
         head->next = NULL;
         return head;
     }
@@ -56,6 +62,7 @@ pNode findAndCreateLink(int needSave,int key,void* value,int datalen)
             if(needSave == 1){
                 memcpy(curp->data,value,datalen);
             }
+            //printf("Link has Finded(key = %d)\n",key);
             return curp;
         }
         lastp = curp;

@@ -23,10 +23,9 @@
  char *data： Numpy Array 中指向数据的头指针。
 
  */
-
-
-Matrix * pyArray2Matrix(PyArrayObject* array);
+#define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
+void pyArray2Matrix(PyArrayObject* array,Matrix **m);
 PyArrayObject * matrix2pyArray(Matrix* array);
 void printArray(PyArrayObject * array);
-
+void printArrayShape(PyArrayObject * array);
 #endif /* GateC_h */

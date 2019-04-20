@@ -301,7 +301,10 @@ int getMatrixNdim(Matrix *m){
 //打印数组
 void printarray(Matrix *m){
     int i,w,x,y,z;
-    if(!m) return;
+    if(!m){
+        printf("ERROR printarray m is NULL!!!\n");
+        return;
+    }
     z = m->dshape.shape[3];
     y = m->dshape.shape[2] * z;
     x = m->dshape.shape[1] * y;
@@ -1191,10 +1194,17 @@ int kMulMatrix(Matrix *m,double k){
 Matrix *mulSecondOrderMatrixs(Matrix *m1,Matrix *m2){
     int i,j,k,count=0;
     double temp = 0;
-    if(!m1 || !m2) return NULL;
+    if(!m1 || !m2){
+        printf("ERROR mulSecondOrderMatrixs m1 or m2 is NULL!!!!!\n");
+        return NULL;
+    }
     if(m2->dshape.shape[2] == 0) m2->dshape.shape[2] = 1; //考虑1维数组情况
     if(m1->dshape.shape[3] != m2->dshape.shape[2]){  //矩阵不匹配
         if(m2->dshape.shape[2] == 1) m2->dshape.shape[2] = 0;
+        
+        printf("ERROR mulSecondOrderMatrixs 矩阵不匹配\n");
+        printShape(m1);
+        printShape(m2);
         return NULL;
     }
     Matrix *resultm = (Matrix *)MemoryPool_Alloc(sizeof(Matrix));

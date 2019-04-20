@@ -19,3 +19,5 @@ void SGDOptimizer(pOptimizerParam p)
         *(p->Bias->array + i) -= p->rate * *(p->dbias->array + i);
     }
 }
+
+

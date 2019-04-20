@@ -8,22 +8,40 @@
 
 #include "GateC.h"
 #include "numpy/ndarraytypes.h"
-Matrix * pyArray2Matrix(PyArrayObject* array)
+void copyArray2Matrix(double* data,Matrix *m)
 {
+    for(int i=0;i<m->length;i++){
+        *(m->array+i) = *(data+i);
+    }
+}
+void pyArray2Matrix(PyArrayObject* array,Matrix **m)
+{
+    if(*m != NULL)return copyArray2Matrix((double*)(array->data),*m);////这个double很重要
     int len = 1;
     Dshape dshape;
     for(int i = 0;i<4;i++)
         dshape.shape[i] = 0;
     for(int i = 0;i<array->nd;i++)
     {
-        dshape.shape[i + (4 - array->nd )]= array->dimensions[i];
+        dshape.shape[i + (4 - array->nd )]= (int)array->dimensions[i];
         len *= array->dimensions[i];
     }
-    Matrix *m = creatMatrixFromDatas(array->data,len,dshape);
-    return m;
+    *m = creatMatrixFromDatas((double*)(array->data),len,dshape);//这个double很重要
 }
 void printArray(PyArrayObject * array)
 {
+    int len = 1;
+    for(int i = 0;i<array->nd;i++)
+    {
+        len *= array->dimensions[i];
+    }
+    printf("->[");
+    for(int i=0;i<len;i++)
+    {
+        printf("%f ",(double)*((double*)(array->data) + i));
+    }
+    printf("]\n");
+/*
     //int len = 1;
     //for(int i = 0;i<array->nd;i++)
     //{
@@ -44,6 +62,7 @@ void printArray(PyArrayObject * array)
         }
         
     }
+*/
 }
 void printArrayShape(PyArrayObject * array)
 {
@@ -63,7 +82,7 @@ void init_numpy(){
 void printPyArrayObject_dimensions(PyArrayObject *array)
 {
     for(int i=0;i<array->nd;i++)
-        printf("ndim=%d i=%d dimensions=%d\n",array->nd,i,array->dimensions[i]);
+        printf("ndim=%d i=%d dimensions=%d\n",array->nd,i,(int)array->dimensions[i]);
 }
 PyArrayObject * matrix2pyArray(Matrix* array)
 {
@@ -103,7 +122,6 @@ PyArrayObject * matrix2pyArray(Matrix* array)
     }
     //destroyMatrix(array);
     return outArray;
-
 }
 /*
 void* findParambyName(void* p,char * name)

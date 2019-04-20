@@ -83,9 +83,14 @@ void Conv4D(Matrix *input,Matrix *weight,Matrix *i_a,Matrix* result,int outputH,
 
 void Backward(CnnGateParam *p)
 {
-
+    //printf("h1\n");
+    //printShape(p->dz);
+    //printShape(p->_output);
+    //printf("%d\n",p->backward);
     p->backward(p->dz,p->_output);
+    //printf("h2\n");
     p->dw = zeros_like(p->weight);
+    //printf("h3\n");
     p->dbias = zeros_like(p->bias);
     p->dx = zeros_like(p->input);
     
