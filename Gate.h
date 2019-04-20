@@ -12,15 +12,7 @@
 #include <stdio.h>
 #include "Activatior.h"
 #include "Optimizer.h"
-#include "PoolGate.h"
-
-typedef struct ParamBuff_TAG{
-    int key;
-    void *p;
-    struct ParamBuff_TAG *next;
-}*pParamBuff,paramBuff;
-void* findParamBuffAndCreate(int needSave,int key,void *p);
-
+#include "Link.h"
 
 int findParamBuff(int key);
 

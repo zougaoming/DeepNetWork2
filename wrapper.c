@@ -20,21 +20,28 @@ typedef struct  {
     unsigned char init;
 }Mat;
 */
+int str_len(char *s)
+{
+    int len=0;
+    while(*s!='\0')
+    {
+        len++;
+        s++;
+    }
+    return len;
+}
 
 static PyObject *py_PoolGate_backward(PyObject *self,PyObject * args)
 {
-    printf("start_Backward\n");
     PyObject* p_dz;
-    PyObject* p_input;
-    PyObject* bz_x;
-    PyObject* bz_y;
-    PoolGateParam p;
     int key;
-    if(!PyArg_ParseTuple(args,"O|O|O|Oiisi",&p_input,&p_dz,&bz_x,&bz_y,&(p.filter),&(p.strids),&(p.type),&key))
+    if(!PyArg_ParseTuple(args,"Oi",&p_dz,&key))
     {
         return NULL;
     }
-    PoolGateParam* newp = (PoolGateParam*)findParamBuffAndCreate(0,key,&p);
+    pNode node = findAndCreateLink(0,key,NULL,sizeof(PoolGateParam));
+    PoolGateParam* newp = (PoolGateParam*)(node->data);
+    
     //findParamBuffAndCreate(0,key,&p);
     //printarray(newp->bz_x);
     //printarray(pyArray2Matrix((PyArrayObject*)bz_x));
@@ -47,11 +54,27 @@ static PyObject *py_PoolGate_backward(PyObject *self,PyObject * args)
     
     PyArrayObject *result =  matrix2pyArray(PoolGate_Backward(newp));
     
-    //destroyMatrix(p.input);
-    //destroyMatrix(p.dz);
-    //destroyMatrix(p.bz_x);
-    //destroyMatrix(p.bz_y);
+    //destroyMatrix(newp->input);
+    //destroyMatrix(newp->dz);
+    //destroyMatrix(newp->bz_x);
+    //destroyMatrix(newp->bz_y);
     return (PyObject *)Py_BuildValue("O",result);
+}
+static PyObject *py_PoolGate_init(PyObject *self,PyObject * args)
+{
+    PyObject* p_object;
+    PoolGateParam p;
+    int key;
+    if(!PyArg_ParseTuple(args,"Oiisi",&p_object,&(p.filter),&(p.strids),&(p.type),&key))
+    {
+        return NULL;
+    }
+    p.input = pyArray2Matrix((PyArrayObject*)p_object);
+    pNode node = findAndCreateLink(0,key,&p,sizeof(PoolGateParam));
+    if(node == NULL)
+        return (PyObject *)Py_BuildValue("i",0);
+    else
+        return (PyObject *)Py_BuildValue("i",1);
 }
 
 static PyObject *py_PoolGate(PyObject *self,PyObject * args)
@@ -64,12 +87,10 @@ static PyObject *py_PoolGate(PyObject *self,PyObject * args)
         return NULL;
     }
     p.input = pyArray2Matrix((PyArrayObject*)p_object);
-    
-    
     PoolGateParam *curp = &p;
     PyArrayObject *result =  matrix2pyArray(PoolGate_Forward(curp));
     //destroyMatrix(p.input);
-    findParamBuffAndCreate(1,key,curp);
+    findAndCreateLink(1,key,curp,sizeof(PoolGateParam));
     if(strcmp(p.type, "MAX") == 0)
     {
         PyArrayObject* bz_x = matrix2pyArray(curp->bz_x);
@@ -81,35 +102,33 @@ static PyObject *py_PoolGate(PyObject *self,PyObject * args)
 }
 static PyObject *py_CnnGate_backward(PyObject *self,PyObject * args)
 {
-    
-    PyObject* p_input;
-    PyObject* p_output;
     PyObject *p_dz;
-    PyObject* p_weight;
-    PyObject* p_bias;
-    PyObject* p_activefunc;
-    CnnGateParam p;
-    if(!PyArg_ParseTuple(args,"O|O|O|O|O|sii",&p_input,&p_output,&p_dz,&(p_weight),&(p_bias),&p_activefunc,&(p.strids),&(p.panding)))
+    //CnnGateParam p;
+    int key;
+    char* activefunc;
+    if(!PyArg_ParseTuple(args,"Ois",&p_dz,&key,&activefunc))
     {
         return NULL;
     }
+    CnnGateParam* newp = (CnnGateParam*)(findAndCreateLink(0,key,NULL,sizeof(CnnGateParam))->data);
     
-    p.backward = getBackward((char*)p_activefunc);
-    p.input = pyArray2Matrix((PyArrayObject*)p_input);
-    p._output = pyArray2Matrix((PyArrayObject*)p_output);
-    p.weight = pyArray2Matrix((PyArrayObject*)p_weight);
-    p.bias = pyArray2Matrix((PyArrayObject*)p_bias);
-    p.dz = pyArray2Matrix((PyArrayObject*)p_dz);
-    Backward(&p);
-    PyArrayObject *dw =  matrix2pyArray(p.dw);
-    PyArrayObject *dx =  matrix2pyArray(p.dx);
-    PyArrayObject *dbias =  matrix2pyArray(p.dbias);
+    newp->backward = getBackward(activefunc);
+    //printf("key=%d,s=%s\n",key,newp->activefunc);
+    //p.input = pyArray2Matrix((PyArrayObject*)p_input);
+    //p._output = pyArray2Matrix((PyArrayObject*)p_output);
+    //p.weight = pyArray2Matrix((PyArrayObject*)p_weight);
+    //p.bias = pyArray2Matrix((PyArrayObject*)p_bias);
+    newp->dz = pyArray2Matrix((PyArrayObject*)p_dz);
+    Backward(newp);
+    PyArrayObject *dw =  matrix2pyArray(newp->dw);
+    PyArrayObject *dx =  matrix2pyArray(newp->dx);
+    PyArrayObject *dbias =  matrix2pyArray(newp->dbias);
     
-    destroyMatrix(p.input);
-    destroyMatrix(p._output);
-    destroyMatrix(p.weight);
-    destroyMatrix(p.bias);
-    destroyMatrix(p.dz);
+    destroyMatrix(newp->input);
+    destroyMatrix(newp->_output);
+    destroyMatrix(newp->weight);
+    destroyMatrix(newp->bias);
+    destroyMatrix(newp->dz);
     return (PyObject *)Py_BuildValue("OOO",dw,dbias,dx);
     
 }
@@ -120,25 +139,29 @@ static PyObject *py_CnnGate(PyObject *self,PyObject * args)
     PyObject* p_object;
     PyObject* p_weight;
     PyObject* p_bias;
-    PyObject* p_activefunc;
     CnnGateParam p;
-    if(!PyArg_ParseTuple(args,"O|O|Osii",&p_object,&(p_weight),&(p_bias),&p_activefunc,&(p.strids),&(p.panding)))
+    CnnGateParam *curp = &p;
+    char* activefunc;
+    int key;
+    if(!PyArg_ParseTuple(args,"O|O|Osiii",&p_object,&(p_weight),&(p_bias),&(activefunc),&(curp->strids),&(curp->panding),&key))
     {
         return NULL;
     }
 
-    CnnGateParam *curp = &p;
-    curp->forward = getForward((char*)p_activefunc);
+    curp->forward = getForward(activefunc);
+    //printf("forward key=%d,s=%s\n",key,activefunc);
+    curp->backward = getBackward(activefunc);
     //curp->isBackward = p.isBackward;
     curp->weight = pyArray2Matrix((PyArrayObject*)p_weight);
     curp->bias = pyArray2Matrix((PyArrayObject*)p_bias);
     curp->input = pyArray2Matrix((PyArrayObject*)p_object);
     Forward(curp);
+    findAndCreateLink(1,key,curp,sizeof(CnnGateParam));
     PyArrayObject *result =  matrix2pyArray(curp->_output);
     PyObject *  t = (PyObject *)Py_BuildValue("O",result);
-    destroyMatrix(curp->weight);
-    destroyMatrix(curp->bias);
-    destroyMatrix(curp->input);
+    //destroyMatrix(curp->weight);
+    //destroyMatrix(curp->bias);
+    //destroyMatrix(curp->input);
     return t;
 }
 
@@ -261,6 +284,7 @@ static PyObject *py_AddGate_Backward(PyObject *self,PyObject * args)
 //添加模块数组(注意是PyMethodDef,不要错写成PyMethondDef)
 //定义对应的方法名，后面Python调用的时候就用这里面的方法名调用
 static PyMethodDef py_test1Methods[] = {
+    {"PoolGate_init",py_PoolGate_init,METH_VARARGS},
     {"PoolGate",py_PoolGate,METH_VARARGS},
     {"PoolGate_Backward",py_PoolGate_backward,METH_VARARGS},
     {"AddGate_Forward",py_AddGate_Forward,METH_VARARGS},
