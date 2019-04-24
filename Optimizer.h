@@ -23,8 +23,18 @@ typedef struct OptimizerParams{
     Matrix *b1;
     Matrix *b2;
     Matrix *b3;
-    unsigned int t;
+    unsigned int tmpKey;
+    int key;
 }*pOptimizerParam,OptimizerParam;
 
+typedef void (*OptimizerFunc)(pOptimizerParam p);
+OptimizerFunc getOptimizer(char* optimizerFuncName);
+
 void SGDOptimizer(pOptimizerParam p);
+void SGDandMomentumOptimizer(pOptimizerParam p);
+void SGDNesterovMomentumOptimizer(pOptimizerParam p);
+void AdaGradOptimizer(pOptimizerParam p);
+void RMSPropOptimizer(pOptimizerParam p);
+void AdamOptimizer(pOptimizerParam p);
+void AdadeltaOptimizer(pOptimizerParam p);
 #endif /* Optimizer_h */

@@ -105,13 +105,15 @@ static PyObject *py_CnnGate_backward(PyObject *self,PyObject * args)
     //CnnGateParam p;
     int key;
     char* activefunc;
-    if(!PyArg_ParseTuple(args,"Ois",&p_dz,&key,&activefunc))
+    char* p_optimizerfunc;
+    if(!PyArg_ParseTuple(args,"Oiss",&p_dz,&key,&activefunc,&p_optimizerfunc))
     {
         return NULL;
     }
     CnnGateParam* newp = (CnnGateParam*)(findAndCreateLink(0,key,NULL,sizeof(CnnGateParam))->data);
     
     newp->backward = getBackward(activefunc);
+    newp->optimizerFuncName = p_optimizerfunc;
     //printf("key=%d,s=%s\n",key,newp->activefunc);
     //p.input = pyArray2Matrix((PyArrayObject*)p_input);
     //p._output = pyArray2Matrix((PyArrayObject*)p_output);
@@ -148,7 +150,7 @@ static PyObject *py_CnnGate(PyObject *self,PyObject * args)
     }
 
     CnnGateParam* curp = (CnnGateParam*)(findAndCreateLink(0,key,NULL,sizeof(CnnGateParam))->data);
-
+    curp->key = key;
     curp->strids = p.strids;
     curp->panding = p.panding;
     curp->forward = getForward(activefunc);
@@ -173,14 +175,16 @@ static PyObject *py_NeuronGate_backward(PyObject *self,PyObject * args)
 
     PyObject *p_dz;
     PyObject* p_activefunc;
+    char* p_optimizerfunc;
     //NeuronGateParam p;
     int key;
-    if(!PyArg_ParseTuple(args,"Osi",&p_dz,&p_activefunc,&key))
+    if(!PyArg_ParseTuple(args,"Ossi",&p_dz,&p_activefunc,&p_optimizerfunc,&key))
     {
         return NULL;
     }
     NeuronGateParam* curp = (NeuronGateParam*)(findAndCreateLink(0,key,NULL,sizeof(NeuronGateParam))->data);
     curp->backward = getBackward((char*)p_activefunc);
+    curp->optimizerFuncName = p_optimizerfunc;
     pyArray2Matrix((PyArrayObject*)p_dz,&(curp->dz));
 
 
@@ -223,7 +227,7 @@ static PyObject *py_NeuronGate_Forward(PyObject *self,PyObject * args)
         return NULL;
     }
     NeuronGateParam* curp = (NeuronGateParam*)(findAndCreateLink(0,key,NULL,sizeof(NeuronGateParam))->data);
-
+    curp->key = key;
     curp->forward = getForward((char*)p_activefunc);
     if(curp->weight == NULL)pyArray2Matrix((PyArrayObject*)p_weight,&curp->weight);
     if(curp->bias == NULL)pyArray2Matrix((PyArrayObject*)p_bias,&curp->bias);

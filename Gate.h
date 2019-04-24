@@ -19,5 +19,5 @@ int findParamBuff(int key);
 int getOutputSize(int M,int S,int F,int P);
 
 
-void Optimizer(Matrix *w,Matrix *bias,Matrix *dw,Matrix *db);
+void Optimizer(Matrix *w,Matrix *bias,Matrix *dw,Matrix *db,int key,char* optimizerFuncName);
 #endif /* Gate_h */

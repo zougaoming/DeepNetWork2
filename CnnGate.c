@@ -145,7 +145,7 @@ void Backward(CnnGateParam *p)
             modifyMatrixElem(p->dbias, 0, 0, 0, outc, dbias);
         }
     }
-    Optimizer(p->weight,p->bias,p->dw,p->dbias);
+    Optimizer(p->weight,p->bias,p->dw,p->dbias,p->key,p->optimizerFuncName);
     //printarray(p->weight);
     destroyMatrix(padded_delta);
     destroyMatrix(out_tmp2);

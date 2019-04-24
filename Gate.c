@@ -16,7 +16,7 @@ int getOutputSize(int M,int S,int F,int P)
 
 
 
-void Optimizer(Matrix *w,Matrix *bias,Matrix *dw,Matrix *db)
+void Optimizer(Matrix *w,Matrix *bias,Matrix *dw,Matrix *db,int key,char* optimizerFuncName)
 {
     OptimizerParam p;
     p.rate = 0.05;
@@ -24,6 +24,12 @@ void Optimizer(Matrix *w,Matrix *bias,Matrix *dw,Matrix *db)
     p.dbias = db;
     p.W = w;
     p.Bias = bias;
-    SGDOptimizer(&p);
+    p.key = key;
+    OptimizerFunc optimizerFunc = getOptimizer(optimizerFuncName);
+    if(optimizerFunc == NULL){
+        printf("Optimizer暂时不支持%s,继续默认调用函数\"SGDOptimizer()\"!\n",optimizerFuncName);
+        return SGDOptimizer(&p);
+    }
+    optimizerFunc(&p);
 }
 
