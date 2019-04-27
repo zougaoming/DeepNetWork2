@@ -392,7 +392,7 @@ class JsonModel:
 			elif text.lower()[0:4] == 'copy':
 				upNodes = self.getInputNodeKey(key)
 				Input = 'o' + self.key2bz(upNodes[0])
-				s = 'CopyGate(T, Input="' + Input + '",o="' + o + '")'
+				s = 'CopyGate(T, key='+ str(key) +',Input="' + Input + '",o="' + o + '")'
 				if len(text) == 4:
 					otherKey = otherKey + str(key)
 				l = Link(upNodes[0], key, 0, 'copyGate' + bz,s,otherKey=otherKey)
@@ -500,13 +500,13 @@ class JsonModel:
 			elif node['figure'] != 'Value' and node['figure'] != 'Database' and node['figure'] != 'Output':
 				upNodes = self.getInputNodeKey(key)
 				Input = 'o' + self.key2bz(upNodes[0])
-				s = 'CopyGate(T, Input="' + Input + '",o="' + o + '")'
+				s = 'CopyGate(T, key='+ str(key) +',Input="' + Input + '",o="' + o + '")'
 				l = Link(upNodes[0], key, 0, 'copyGate' + bz,s)
 				self.Gates.append(l)
 			elif node['figure'] == 'Output':
 					upNodes = self.getInputNodeKey(key)
 					Input = 'o' + self.key2bz(upNodes[0])
-					s = 'CopyGate(T, Input="' + Input + '",o="' + o + '")'
+					s = 'CopyGate(T, key='+ str(key) +',Input="' + Input + '",o="' + o + '")'
 					l = Link(upNodes[0], key, 0, 'copyGate' + bz, s)
 					self.Gates.append(l)
 					self.Output.append(node)

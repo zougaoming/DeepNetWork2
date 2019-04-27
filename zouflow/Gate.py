@@ -152,21 +152,34 @@ class ConcateGate(Gate):
 		setattr(self.Nework, self.dInput2,eval(self.dz)[l:])
 
 class CopyGate(Gate):
-	def __init__(self, Network, Input=None, o=None):
-		super(self.__class__, self).init(self,'CopyGate', Network, Input=Input, o=o)
-
+	def __init__(self, Network, Input=None, o=None,key=0):
+		super(self.__class__, self).init(self,'CopyGate', Network, Input=Input, o=o,key=key)
 	def forward(self):
+		output = GateC.CopyGate_Forward(np.array(eval(self.Input),dtype=np.float64),self.key)
+		setattr(self.Nework, self.o, output)
+
+		'''
 		setattr(self.Nework, self.o, eval(self.Input))
 		if hasattr(self.Nework, self.dInput) is True:  #
 			setattr(self.Nework, self.dInput, np.zeros_like(eval(self.dz)))
+		'''
 
 	def backward(self):
+		dinput = GateC.CopyGate_Backward(np.array(eval(self.dz),dtype=np.float64),self.key)
+		#print('dinput->',dinput)
+		setattr(self.Nework, self.dInput, dinput)
 
+		'''
 		if hasattr(self.Nework, self.dInput) is False:
+			print("python is False")
 			setattr(self.Nework, self.dInput, eval(self.dz))
 		else:
+			print("python is Ture")
+			print(eval('self.Nework.' + self.dInput))
 			setattr(self.Nework, self.dInput, eval(self.dz) + eval('self.Nework.' + self.dInput))
 
+		print('copyGate_backward->', dinput - eval('self.Nework.' + self.dInput))
+		'''
 class FlattenGate(Gate):
 	def __init__(self, Network, Input=None, o=None):
 		super(self.__class__, self).init(self,'FlattenGate', Network, Input=Input, o=o)
@@ -175,6 +188,7 @@ class FlattenGate(Gate):
 		self.W = 0
 		self.input_dim = 0
 	def forward(self):
+		'''
 		self.input = eval(self.Input)
 		self.N = self.input.shape[0]
 		l = 1
@@ -184,16 +198,22 @@ class FlattenGate(Gate):
 		for n in range(self.N):
 			out[:,n] = self.input[n].flatten()
 		self._output = out
-		setattr(self.Nework, self.o, self._output)
+		'''
+		out = GateC.FlattenGate_Forward(np.array(eval(self.Input),dtype=np.float64),-100)
+		setattr(self.Nework, self.o, out)
 
 	def backward(self):
+		out = GateC.FlattenGate_Backward(np.array(eval(self.dz), dtype=np.float64), -100)
+		'''
 		dz = eval(self.dz)
 		dinput = dz.reshape(-1,self.N)
 		out = np.zeros_like(self.input)
 		for n in range(self.N):
 			out[n] = dinput[:,n].reshape(self.input.shape[1],self.input.shape[2],self.input.shape[3])
-
+		'''
 		setattr(self.Nework, self.dInput, out)
+		#print('outos->',out,os)
+		#print(out-os)
 
 class CNNGate(Gate):
 	def __init__(self, Network, Input=None,W=None,bias=None,o=None,activeFunc = None,fliters=3,step = 1,padding = 0,channel_in = 1,channel_out = 1,key=0):
@@ -215,9 +235,6 @@ class CNNGate(Gate):
 
 	def getOutputSize(self, M, S, F, P):
 		return (M - F + 2 * P) / S + 1
-
-
-
 	def conv(self, input, weight, outputH, outputW, step):
 		result = np.zeros((outputH, outputW))
 		fliter = weight.shape[0]
@@ -227,7 +244,6 @@ class CNNGate(Gate):
 				result[h][w] = np.multiply(i_a,weight).sum()  # self.calc_connv(i_a,weight)#np.multiply(i_a,weight).sum()#self.calc_connv(i_a,weight)
 				#print("python h=", h, "w=", w, "sum=", result[h][w])
 		return result
-
 	def paddingZeros(self, input, P):
 		if P > 0:
 			if input.ndim == 2:
