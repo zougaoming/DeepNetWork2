@@ -169,7 +169,31 @@ static PyObject *py_CnnGate(PyObject *self,PyObject * args)
     //destroyMatrix(curp->input);
     return t;
 }
-
+static PyObject *py_NeuronGate_Forward(PyObject *self,PyObject * args)
+{
+    
+    PyObject* p_input;
+    PyObject* p_weight;
+    PyObject* p_bias;
+    PyObject* p_activefunc;
+    int key;
+    if(!PyArg_ParseTuple(args,"O|O|O|si",&p_input,&(p_weight),&(p_bias),&p_activefunc,&key))
+    {
+        return NULL;
+    }
+    NeuronGateParam* curp = (NeuronGateParam*)(findAndCreateLink(0,key,NULL,sizeof(NeuronGateParam))->data);
+    curp->key = key;
+    curp->forward = getForward((char*)p_activefunc);
+    if(curp->weight == NULL)pyArray2Matrix((PyArrayObject*)p_weight,&curp->weight);
+    if(curp->bias == NULL)pyArray2Matrix((PyArrayObject*)p_bias,&curp->bias);
+    pyArray2Matrix((PyArrayObject*)p_input,&(curp->input));
+    Neuron_Forward(curp);
+    
+    findAndCreateLink(1,key,curp,sizeof(NeuronGateParam));
+    PyArrayObject *result =  matrix2pyArray(curp->_output);
+    PyObject *  t = (PyObject *)Py_BuildValue("O",result);
+    return t;
+}
 static PyObject *py_NeuronGate_backward(PyObject *self,PyObject * args)
 {
 
@@ -214,34 +238,79 @@ static PyObject *py_NeuronGate_backward(PyObject *self,PyObject * args)
     
 }
 
-static PyObject *py_NeuronGate_Forward(PyObject *self,PyObject * args)
+static PyObject *py_CopyGate_Forward(PyObject *self,PyObject * args)
 {
     
     PyObject* p_input;
-    PyObject* p_weight;
-    PyObject* p_bias;
-    PyObject* p_activefunc;
     int key;
-    if(!PyArg_ParseTuple(args,"O|O|O|si",&p_input,&(p_weight),&(p_bias),&p_activefunc,&key))
+    if(!PyArg_ParseTuple(args,"Oi",&p_input,&key))
     {
         return NULL;
     }
-    NeuronGateParam* curp = (NeuronGateParam*)(findAndCreateLink(0,key,NULL,sizeof(NeuronGateParam))->data);
+    pCopyGateParam curp = (pCopyGateParam)(findAndCreateLink(0,key,NULL,sizeof(CopyGateParam))->data);
     curp->key = key;
-    curp->forward = getForward((char*)p_activefunc);
-    if(curp->weight == NULL)pyArray2Matrix((PyArrayObject*)p_weight,&curp->weight);
-    if(curp->bias == NULL)pyArray2Matrix((PyArrayObject*)p_bias,&curp->bias);
     pyArray2Matrix((PyArrayObject*)p_input,&(curp->input));
-    Neuron_Forward(curp);
-    
-    findAndCreateLink(1,key,curp,sizeof(NeuronGateParam));
+    CopyGate_Forward(curp);
+    findAndCreateLink(1,key,curp,sizeof(CopyGateParam));
     PyArrayObject *result =  matrix2pyArray(curp->_output);
     PyObject *  t = (PyObject *)Py_BuildValue("O",result);
-    //destroyMatrix(curp->weight);
-    //destroyMatrix(curp->bias);
-    //destroyMatrix(curp->input);
     return t;
 }
+
+
+static PyObject *py_CopyGate_Backward(PyObject *self,PyObject * args)
+{
+    
+    PyObject *p_dz;
+    int key;
+    if(!PyArg_ParseTuple(args,"Oi",&p_dz,&key))
+    {
+        return NULL;
+    }
+    pCopyGateParam curp = (pCopyGateParam)(findAndCreateLink(0,key,NULL,sizeof(CopyGateParam))->data);
+    pyArray2Matrix((PyArrayObject*)p_dz,&(curp->dz));
+    CopyGate_Backward(curp);
+    PyArrayObject *dinput =  matrix2pyArray(curp->dinput);
+    return (PyObject *)Py_BuildValue("O",dinput);
+}
+
+static PyObject *py_FlattenGate_Forward(PyObject *self,PyObject * args)
+{
+    
+    PyObject* p_input;
+    int key;
+    if(!PyArg_ParseTuple(args,"Oi",&p_input,&key))
+    {
+        return NULL;
+    }
+    pFlattenGateParam curp = (pFlattenGateParam)(findAndCreateLink(0,key,NULL,sizeof(FlattenGateParam))->data);
+    curp->key = key;
+    pyArray2Matrix((PyArrayObject*)p_input,&(curp->input));
+    FlattenGate_Forward(curp);
+    findAndCreateLink(1,key,curp,sizeof(CopyGateParam));
+    PyArrayObject *result =  matrix2pyArray(curp->_output);
+    PyObject *  t = (PyObject *)Py_BuildValue("O",result);
+    return t;
+}
+
+
+static PyObject *py_FlattenGate_Backward(PyObject *self,PyObject * args)
+{
+    
+    PyObject *p_dz;
+    int key;
+    if(!PyArg_ParseTuple(args,"Oi",&p_dz,&key))
+    {
+        return NULL;
+    }
+    pFlattenGateParam curp = (pFlattenGateParam)(findAndCreateLink(0,key,NULL,sizeof(FlattenGateParam))->data);
+    pyArray2Matrix((PyArrayObject*)p_dz,&(curp->dz));
+    FlattenGate_Backward(curp);
+    PyArrayObject *dinput =  matrix2pyArray(curp->dinput);
+    return (PyObject *)Py_BuildValue("O",dinput);
+}
+
+
 static PyObject *py_test(PyObject *self,PyObject * args)
 {
     
@@ -312,6 +381,10 @@ static PyMethodDef py_test1Methods[] = {
     {"CnnGate_Backward",py_CnnGate_backward,METH_VARARGS},
     {"NeuronGate_Forward",py_NeuronGate_Forward,METH_VARARGS},
     {"NeuronGate_Backward",py_NeuronGate_backward,METH_VARARGS},
+    {"CopyGate_Forward",py_CopyGate_Forward,METH_VARARGS},
+    {"CopyGate_Backward",py_CopyGate_Backward,METH_VARARGS},
+    {"FlattenGate_Forward",py_FlattenGate_Forward,METH_VARARGS},
+    {"FlattenGate_Backward",py_FlattenGate_Backward,METH_VARARGS},
     {"test",py_test,METH_VARARGS},
     
     
